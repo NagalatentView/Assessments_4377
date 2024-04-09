@@ -1,0 +1,90 @@
+1.select customerid, DataUsed
+from customerinteractions
+where DataUsed > (select avg(dataused) from customerinteractions)
+
+
+2.select customerid
+from customerinteractions a
+where month = "march" and CallDuration > (select callduration from customerinteractions b where month ="february" and a.customerid = b.customerid)
+
+
+
+3.select customerid
+from customerinteractions a
+where month = "march" and 
+a.DataUsed > (select dataused from customerinteractions b where month = "february" and a.customerid = b.customerid) 
+and messagecount < (select MessageCount from customerinteractions b where month = "february" and a.customerid = b.customerid)
+
+
+4.select ProductTypeID,sum(totalsalesamount) as total_sales from quarterlysales
+where ProductTypeID = 1
+group by ProductTypeID;
+
+
+5. select ProductTypeID
+from quarterlysales
+where Quarter = "Q1"
+order by TotalSalesAmount desc limit 1;
+
+
+6.select avg(TotalSalesAmount) 
+from quarterlysales
+where Quarter =  "Q2" and year = "2024" and ProductTypeID = 1
+
+7.  select distinct region 
+ from sectorenergyconsumption
+ where month = "march" and energysource in ("solar" , "Wind")
+  or
+select region
+from sectorenergyconsumption
+where (month = "march" and EnergySource = "solar" and ConsumptionKWh >( select avg(ConsumptionKWh) from sectorenergyconsumption)) or
+ (month = "march"and EnergySource = "wind" and ConsumptionKWh >( select avg(ConsumptionKWh) from sectorenergyconsumption) );
+
+
+
+8.  select * from sectorenergyconsumption a
+ where month = "march" and avg(ConsumptionKWh) > (select avg(ConsumptionKWh) from sectorenergyconsumption b where a.region = b.region)
+
+
+
+9. 
+ (select sum(consumptionkwh)
+ from sectorenergyconsumption
+ where month = "feruary"  and EnergySource = 'Fossil Fuels')
+ union
+  (select sum(consumptionkwh)
+ from sectorenergyconsumption
+ where month = "feruary"  and EnergySource = 'wind')
+ union
+  (select sum(consumptionkwh)
+ from sectorenergyconsumption
+ where month = "feruary"  and EnergySource = 'solar');
+
+
+
+
+10.select customerName,policyid
+from insuranceactivities
+where FeedbackScore> (select avg(FeedbackScore) from insuranceactivities)or
+ClaimsCount > (select avg(ClaimsCount) from insuranceactivities);
+
+
+11.select sum(AnnualPremium)
+from insuranceactivities
+where FeedbackScore> (select avg(FeedbackScore) from insuranceactivities)
+and ClaimsCount >0
+
+
+
+12.select 
+case 
+ where ClaimsCount in (1,2) then concat('not good',avg(FeedbackScore))
+ where ClaimsCount in (3,4) then concat('best',avg(FeedbackScore))
+end as output
+from insuranceactivities
+group by PolicyType;
+
+
+
+
+
