@@ -89,7 +89,7 @@ limit 1;
 
 --12
 select * from l4_sales s
-left join l4_product p using(product_id)
-right join l4_product d using(product_id)
+left join l4_products p using (product_id)
+right join l4_products d using(product_id)
 where p.product_name is null and s.region is null
 group by p.product_name , s.region
