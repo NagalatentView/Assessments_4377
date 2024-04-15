@@ -1,0 +1,180 @@
+-- 1
+with a as(
+select product_id , product_category,sales_date,
+avg(sales_amount) over (partition by product_category order by sales_date) as average_sales
+from products
+join sales_records using (product_id)
+)
+select product_id, product_category,average_sales from a
+where sales_date >= date_sub(current_date(),interval -30 day);
+
+-- 2
+select product_category,product_name,
+rank() over (ORDER BY sales_amount DESC) as ranks
+from products
+join sales_records using (product_id)
+limit 3;
+
+-- 3
+select * ,
+cume_dist() over (order by sales_amount desc),
+rank() over (order by sales_amount desc)
+from customers
+join sales_records using (customer_id)
+
+-- 4
+select customer_id,
+(case 
+when count(product_id) >= 4 then "consistent_buyers"
+else "occasional buyers"
+end) as purchasing_behaviour
+from customers
+join sales_records using (customer_id)
+where sales_date <= date_sub(current_date(),interval 30 day)
+group by customer_id
+
+-- 5
+ select distinct departure_airport,arrival_airport,
+ avg(ticket_price) over (partition by flight_id) as average_tkt_price
+ from flights
+ join tickets using (flight_id)
+
+-- 6
+select flight_number,departure_date,sum(ticket_id)  as total_ticket_sold
+from flights
+ join tickets using (flight_id)
+ where ticket_date >= date_sub(current_date() , interval 30 day)
+ group by flight_number,departure_date;
+
+-- 7
+ with cte as(
+ select *,
+ sum(ticket_price) over(partition by passenger_id) as total_amount
+ from flights
+ join tickets using (flight_id)
+ join passengers using(passenger_id)
+ )
+ select passenger_name , total_amount,frequent_flyer_status
+ from cte
+ order by total_amount desc 
+ limit 5;
+
+-- 8
+ with cte2 as(
+ select *,
+ month(ticket_date) as months,
+ count(ticket_id) over (partition by month(ticket_date)) as  ticket_count
+ from tickets)
+ select months,ticket_count
+ from cte2
+ order by  ticket_count desc
+ limit 1;
+
+-- 9.
+ select player_id , game_genre ,round(avg(datediff(registration_date,release_date))) as average_play_time from players
+ join playerscores using(player_id)
+ join games using (game_id)
+ group by player_id,game_genre
+ order by avg(datediff(release_date,registration_date)) desc;
+
+--10
+ select game_name,count(player_id) as total_no_players
+ from players
+ join playerscores using(player_id) 
+ join games using (game_id)
+ group by game_name
+ order by count(player_id) desc 
+ limit 3;
+
+-- 11
+select game_name,
+  count(player_id) as total_no_players,
+  max(score) as highest_score,
+  avg(score) as avg_score
+ from players
+ join playerscores using(player_id) 
+ join games using (game_id)
+ group by game_name
+ 
+
+-- 12
+ with cte3 as(
+  select *,
+  (case
+  when play_date >= date_sub((select max(play_date) from playerscores) , interval 30 day) then "active"
+  else "not_active"
+  end) as churn_activity
+ from players
+ join playerscores using(player_id) 
+ join games using (game_id)
+
+ )
+  select player_name,registration_date,play_date as last_activity from cte3 where churn_activity = "active"
+
+
+
+--13
+select doctor_id , sum(cost) ascost_of_treatment from patients
+join treatments using (patient_id)
+join doctors using (doctor_id)
+group by doctor_id
+order by sum(cost) desc
+limit 5;
+
+--14
+ select treatment_name,
+ sum(cost) as cost_treatment,
+ percent_rank() over (order by sum(cost) )  as percent_contribution
+ from patients
+join treatments using (patient_id)
+join doctors using (doctor_id)
+group by treatment_name;
+
+-- 15
+ select patient_id,patient_name,admission_date,discharge_date from patients
+join treatments using (patient_id)
+join doctors using (doctor_id)
+where datediff(admission_date, discharge_date) = 30
+order by admission_date asc;
+
+-- 16
+ select gender,diagnosis,round(avg(datediff(discharge_date,admission_date)))as los from patients
+join treatments using (patient_id)
+join doctors using (doctor_id)
+group by gender,diagnosis;
+
+-- 17
+select  department,semester, avg(grade) as average_grade from students
+join enrollments using (student_id)
+join courses using (course_id)
+group by department,semester
+order by avg(grade) desc;
+
+-- 18
+select major,count(student_id) as total_enrollments,enrollment_year from students
+join enrollments using (student_id)
+join courses using (course_id)
+group by major,enrollment_year
+order by count(student_id) desc;
+
+-- 19
+select student_id,student_name,semester, sum(credits) as total_credits from students
+join enrollments using (student_id)
+join courses using (course_id)
+where  credits > (select max(credits) from courses)*0.5
+group by semester,student_id,student_name
+ or 
+
+select student_id,student_name,semester, sum(credits) as total_credits from students
+join enrollments using (student_id)
+join courses using (course_id)
+where  credits > 50
+group by semester,student_id,student_name
+
+-- 20
+select course_name,enrollment_year, count(student_id) as no_of_students  from students
+join enrollments using (student_id)
+join courses using (course_id)
+group by course_name,enrollment_year
+order by count(student_id) desc
+limit 3;
